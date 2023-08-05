@@ -13,7 +13,7 @@ import 'package:mobile_scanner/src/barcode_utility.dart';
 class MobileScannerController {
   MobileScannerController({
     this.facing = CameraFacing.back,
-    this.detectionSpeed = DetectionSpeed.normal,
+    this.detectionSpeed = DetectionSpeed.unrestricted,
     this.detectionTimeoutMs = 250,
     this.torchEnabled = false,
     this.formats,
@@ -21,7 +21,7 @@ class MobileScannerController {
     @Deprecated(
       'Instead, use the result of calling `start()` to determine if permissions were granted.',
     )
-    this.onPermissionSet,
+        this.onPermissionSet,
     this.autoStart = true,
   });
 
@@ -364,51 +364,17 @@ class MobileScannerController {
         break;
       case 'barcode':
         if (data == null) return;
-        final parsed = (data as List)
-            .map((value) => Barcode.fromNative(value as Map))
-            .toList();
         _barcodesController.add(
           BarcodeCapture(
             raw: data,
-            barcodes: parsed,
+            barcodes: [],
             image: event['image'] as Uint8List?,
             width: event['width'] as double?,
             height: event['height'] as double?,
           ),
         );
         break;
-      case 'barcodeMac':
-        _barcodesController.add(
-          BarcodeCapture(
-            raw: data,
-            barcodes: [
-              Barcode(
-                rawValue: (data as Map)['payload'] as String?,
-              )
-            ],
-          ),
-        );
-        break;
-      case 'barcodeWeb':
-        final barcode = data as Map?;
-        _barcodesController.add(
-          BarcodeCapture(
-            raw: data,
-            barcodes: [
-              if (barcode != null)
-                Barcode(
-                  rawValue: barcode['rawValue'] as String?,
-                  rawBytes: barcode['rawBytes'] as Uint8List?,
-                  format: toFormat(barcode['format'] as int),
-                  corners: toCorners(
-                    (barcode['corners'] as List<Object?>? ?? [])
-                        .cast<Map<Object?, Object?>>(),
-                  ),
-                ),
-            ],
-          ),
-        );
-        break;
+
       case 'error':
         throw MobileScannerException(
           errorCode: MobileScannerErrorCode.genericError,

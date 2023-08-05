@@ -7,73 +7,36 @@ import 'package:mobile_scanner/src/mobile_scanner_exception.dart';
 import 'package:mobile_scanner/src/objects/barcode_capture.dart';
 import 'package:mobile_scanner/src/objects/mobile_scanner_arguments.dart';
 
-/// The function signature for the error builder.
 typedef MobileScannerErrorBuilder = Widget Function(
   BuildContext,
   MobileScannerException,
   Widget?,
 );
 
-/// The [MobileScanner] widget displays a live camera preview.
 class MobileScanner extends StatefulWidget {
-  /// The controller that manages the barcode scanner.
-  ///
-  /// If this is null, the scanner will manage its own controller.
   final MobileScannerController? controller;
 
-  /// The function that builds an error widget when the scanner
-  /// could not be started.
-  ///
-  /// If this is null, defaults to a black [ColoredBox]
-  /// with a centered white [Icons.error] icon.
   final MobileScannerErrorBuilder? errorBuilder;
 
-  /// The [BoxFit] for the camera preview.
-  ///
-  /// Defaults to [BoxFit.cover].
   final BoxFit fit;
 
-  /// The function that signals when new codes were detected by the [controller].
   final void Function(BarcodeCapture barcodes) onDetect;
 
-  /// The function that signals when the barcode scanner is started.
-  @Deprecated('Use onScannerStarted() instead.')
-  final void Function(MobileScannerArguments? arguments)? onStart;
-
-  /// The function that signals when the barcode scanner is started.
   final void Function(MobileScannerArguments? arguments)? onScannerStarted;
 
-  /// The function that builds a placeholder widget when the scanner
-  /// is not yet displaying its camera preview.
-  ///
-  /// If this is null, a black [ColoredBox] is used as placeholder.
   final Widget Function(BuildContext, Widget?)? placeholderBuilder;
 
-  /// if set barcodes will only be scanned if they fall within this [Rect]
-  /// useful for having a cut-out overlay for example. these [Rect]
-  /// coordinates are relative to the widget size, so by how much your
-  /// rectangle overlays the actual image can depend on things like the
-  /// [BoxFit]
   final Rect? scanWindow;
 
-  /// Only set this to true if you are starting another instance of mobile_scanner
-  /// right after disposing the first one, like in a PageView.
-  ///
-  /// Default: false
   final bool startDelay;
 
-  /// The overlay which will be painted above the scanner when has started successful.
-  /// Will no be pointed when an error occurs or the scanner hasn't be started yet.
   final Widget? overlay;
 
-  /// Create a new [MobileScanner] using the provided [controller]
-  /// and [onBarcodeDetected] callback.
   const MobileScanner({
     this.controller,
     this.errorBuilder,
     this.fit = BoxFit.cover,
     required this.onDetect,
-    @Deprecated('Use onScannerStarted() instead.') this.onStart,
     this.onScannerStarted,
     this.placeholderBuilder,
     this.scanWindow,
@@ -88,14 +51,11 @@ class MobileScanner extends StatefulWidget {
 
 class _MobileScannerState extends State<MobileScanner>
     with WidgetsBindingObserver {
-  /// The subscription that listens to barcode detection.
   StreamSubscription<BarcodeCapture>? _barcodesSubscription;
+  StreamSubscription<BarcodeCapture>? _imageSubscription;
 
-  /// The internally managed controller.
   late MobileScannerController _controller;
 
-  /// Whether the controller should resume
-  /// when the application comes back to the foreground.
   bool _resumeFromBackground = false;
 
   MobileScannerException? _startException;
@@ -115,7 +75,6 @@ class _MobileScannerState extends State<MobileScanner>
         const ColoredBox(color: Colors.black);
   }
 
-  /// Start the given [scanner].
   Future<void> _startScanner() async {
     if (widget.startDelay) {
       await Future.delayed(const Duration(seconds: 1, milliseconds: 500));
@@ -133,8 +92,6 @@ class _MobileScannerState extends State<MobileScanner>
     }
 
     _controller.start().then((arguments) {
-      // ignore: deprecated_member_use_from_same_package
-      widget.onStart?.call(arguments);
       widget.onScannerStarted?.call(arguments);
     }).catchError((error) {
       if (mounted) {
@@ -155,7 +112,6 @@ class _MobileScannerState extends State<MobileScanner>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // App state changed before the controller was initialized.
     if (_controller.isStarting) {
       return;
     }
@@ -178,14 +134,6 @@ class _MobileScannerState extends State<MobileScanner>
     }
   }
 
-  /// the [scanWindow] rect will be relative and scaled to the [widgetSize] not the texture. so it is possible,
-  /// depending on the [fit], for the [scanWindow] to partially or not at all overlap the [textureSize]
-  ///
-  /// since when using a [BoxFit] the content will always be centered on its parent. we can convert the rect
-  /// to be relative to the texture.
-  ///
-  /// since the textures size and the actuall image (on the texture size) might not be the same, we also need to
-  /// calculate the scanWindow in terms of percentages of the texture, not pixels.
   Rect calculateScanWindowRelativeToTextureInPercentage(
     BoxFit fit,
     Rect scanWindow,
@@ -251,7 +199,7 @@ class _MobileScannerState extends State<MobileScanner>
 
   @override
   Widget build(BuildContext context) {
-    final Size size = MediaQuery.sizeOf(context);
+    final Size size = MediaQuery.of(context).size;
 
     return ValueListenableBuilder<MobileScannerArguments?>(
       valueListenable: _controller.startArguments,

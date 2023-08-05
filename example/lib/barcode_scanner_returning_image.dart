@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:mobile_scanner_example/scanner_error_widget.dart';
@@ -19,11 +17,7 @@ class _BarcodeScannerReturningImageState
   MobileScannerArguments? arguments;
 
   final MobileScannerController controller = MobileScannerController(
-    torchEnabled: true,
-    // formats: [BarcodeFormat.qrCode]
-    // facing: CameraFacing.front,
-    // detectionSpeed: DetectionSpeed.normal
-    // detectionTimeoutMs: 1000,
+    facing: CameraFacing.front,
     returnImage: true,
   );
 
@@ -58,20 +52,15 @@ class _BarcodeScannerReturningImageState
           children: [
             Expanded(
               child: barcode?.image != null
-                  ? Transform.rotate(
-                      angle: 90 * pi / 180,
-                      child: Image(
-                        gaplessPlayback: true,
-                        image: MemoryImage(barcode!.image!),
-                        fit: BoxFit.contain,
-                      ),
+                  ? Image(
+                      gaplessPlayback: true,
+                      image: MemoryImage(barcode!.image!),
+                      fit: BoxFit.contain,
                     )
-                  : const Center(
-                      child: Text(
-                        'Your scanned barcode will appear here!',
-                      ),
-                    ),
+                  : const Text('Liveness image!'),
             ),
+            Text('Width : ${barcode?.width}'),
+            Text('Width : ${barcode?.height}'),
             Expanded(
               flex: 2,
               child: ColoredBox(
@@ -84,7 +73,7 @@ class _BarcodeScannerReturningImageState
                         return ScannerErrorWidget(error: error);
                       },
                       fit: BoxFit.contain,
-                      onDetect: (barcode) {
+                      onDetect: (barcode) async {
                         setState(() {
                           this.barcode = barcode;
                         });
@@ -134,23 +123,6 @@ class _BarcodeScannerReturningImageState
                                   : const Icon(Icons.play_arrow),
                               iconSize: 32.0,
                               onPressed: _startOrStop,
-                            ),
-                            Center(
-                              child: SizedBox(
-                                width: MediaQuery.of(context).size.width - 200,
-                                height: 50,
-                                child: FittedBox(
-                                  child: Text(
-                                    barcode?.barcodes.first.rawValue ??
-                                        'Scan something!',
-                                    overflow: TextOverflow.fade,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineMedium!
-                                        .copyWith(color: Colors.white),
-                                  ),
-                                ),
-                              ),
                             ),
                             IconButton(
                               color: Colors.white,
