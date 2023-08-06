@@ -35,7 +35,6 @@ class MobileScannerHandler(
 
     private val callback: MobileScannerCallback = {  image: ByteArray?, width: Int?, height: Int? ->
     val barcodeMap: MutableList<Map<String, Any?>> = mutableListOf()
-Log.v("TAG", "index=");
         if (image != null) {
             barcodeHandler.publishEvent(mapOf(
                 "name" to "barcode",
