@@ -52,8 +52,6 @@ class MobileScanner(
      
         val mediaImage = imageProxy.image ?: return@Analyzer
 
-     
-
         if (detectionSpeed == DetectionSpeed.NORMAL && scannerTimeout) {
             imageProxy.close()
             return@Analyzer
